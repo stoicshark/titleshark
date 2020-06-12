@@ -7,4 +7,4 @@ Releases/Downloads: https://github.com/stoicshark/titleshark/releases
 
 ##
 
-Savefile name and update intervals (in seconds) can be changed in the INI file. Filters can also be added in the INI, they can remove unwanted words, symbols, etc. from every title retrieved.
+Save file name and update intervals (in seconds) can be changed in the INI file. Filters can also be added in the INI, they can remove unwanted words, symbols, etc. from every title retrieved.
