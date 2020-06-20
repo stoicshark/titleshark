@@ -7,4 +7,4 @@ Releases/Downloads: https://github.com/stoicshark/titleshark/releases
 
 ##
 
-Save file name and update intervals (in seconds) can be changed in the INI file. Filters can also be added in the INI, they can remove unwanted words, symbols, etc. from every title retrieved.
+Save file name and update intervals (in seconds) can be changed in the INI file. A timeout can be set (in seconds) for the program to quit searching for a window title if it's unable to find it. The timeout can be disabled by setting it to 0. Filters can also be added in the INI, they can remove unwanted words, symbols, etc. from every title retrieved.

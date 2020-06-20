@@ -1,14 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Automation;
-using System.Security;
 using System.Text;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.IO;
 
@@ -32,27 +26,36 @@ namespace Title_Shark
         private static string _className;
         private static StringBuilder apiResult = new StringBuilder(256); //256 Is max class name length.
         private delegate bool EnumThreadDelegate(IntPtr hWnd, IntPtr lParam);
-        private static string header = "Title Shark version 1.0 - stoic";
+        private static string header = "Title Shark version 1.1 - stoic";
         private static string saveFile = "Title Shark.txt";
-        private static int updateTimer = 5000;
+        private static int updateTimer = 5;
+        private static int timeOut = 30;
         private static List<String> filters;
+        private static bool dowork = false;
 
         static void Main(string[] args)
         {
             Console.Title = "Title Shark";
-
             try
             {
-                RunConsole();
-            } catch
-            {
-                Console.Clear();
-                RunConsole();
+                if (args.Length > 0)
+                {
+                    RunConsole(args[0]);
+                }
+                else
+                {
+                    RunConsole("");
+                }
             }
-            
+            catch(Exception e)
+            {
+                string[] err = {e.Message};
+                Main(err);
+            }
         }
-        private static void RunConsole()
+        private static void RunConsole(string error)
         {
+            Console.Clear();
             var lines = File.ReadLines("Title Shark.ini", UnicodeEncoding.UTF8);
             int iniread = 0;
             filters = new List<string>();
@@ -69,7 +72,11 @@ namespace Title_Shark
                     }
                     if (line.Contains("updatetimer="))
                     {
-                        updateTimer = Int32.Parse(line.Replace("updatetimer=", "")) * 1000;
+                        updateTimer = int.Parse(line.Replace("updatetimer=", ""));
+                    }
+                    if (line.Contains("timeout="))
+                    {
+                       timeOut = int.Parse(line.Replace("timeout=", ""));
                     }
                 }
                 if (iniread == 2 && !line.Contains("[Filters]"))
@@ -84,147 +91,194 @@ namespace Title_Shark
             Console.WriteLine("Select title to track:\n\n");
             Console.WriteLine("     (1) YouTube");
             Console.WriteLine("     (2) aersia.skie.me (VIP)");
-            Console.WriteLine("     (3) Window Title");
-            Console.Write("\n\nEnter Number: ");
+            Console.WriteLine("     (3) Window Title\n\n");
+            if (error != "") Console.Write("Error: " + error + "\n\n");
+            Console.Write("Enter Number: ");
             int mode = Convert.ToInt32(Console.ReadLine());
 
-            if (mode == 1) RunTrack(1, 0, false);
-            if (mode == 2) RunTrack(2, 0, false);
-            if (mode == 3)
+            switch (mode)
             {
-                List<int> item = new List<int>();
-                int browser = 0;
-                Console.Clear();
-                Console.WriteLine(header);
-                Console.WriteLine("\nSelect which browser window title to track:\n\n");
-                List<IntPtr> BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "chrome");
-                for (var i = 0; i < BrowserWindows.Count; i++)
-                {
-                    int length = GetWindowTextLength(BrowserWindows[i]);
-                    StringBuilder sb = new StringBuilder(length + 1);
-                    GetWindowText(BrowserWindows[i], sb, sb.Capacity);
-                    if (sb.ToString() != "")
-                    {
-                        item.Add(i);
-                        Console.WriteLine("     (" + item.Count + ") " + sb.ToString());
-                    }
-                }
-                browser = item.Count;
-                BrowserWindows = WindowsFinder("MozillaWindowClass", "firefox");
-                for (var i = 0; i < BrowserWindows.Count; i++)
-                {
-                    int length = GetWindowTextLength(BrowserWindows[i]);
-                    StringBuilder sb = new StringBuilder(length + 1);
-                    GetWindowText(BrowserWindows[i], sb, sb.Capacity);
-                    if (sb.ToString() != "")
-                    {
-                        item.Add(i);
-                        Console.WriteLine("     (" + item.Count + ") " + sb.ToString());
-                    }
-                }
-                Console.Write("\n\nEnter Number: ");
-                int track = Convert.ToInt32(Console.ReadLine());
-                if (track > browser)
-                {
-                    browser = 1;
-                }
-                else
-                {
-                    browser = 0;
-                }
-
-                try
-                {
-                    RunTrack(item[track - 1], browser, true);
-                }
-                catch
-                {
+                case 1:
+                    RunTrack(1, 0, false);
+                    break;
+                case 2:
+                    RunTrack(2, 0, false);
+                    break;
+                case 3:
+                    List<int> item = new List<int>();
+                    int browser = 0;
                     Console.Clear();
-                    RunConsole();
-                }
+                    Console.WriteLine(header);
+                    Console.WriteLine("\nSelect which browser window title to track:\n\n");
+                    List<IntPtr> BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "chrome");
+                    for (var i = 0; i < BrowserWindows.Count; i++)
+                    {
+                        int length = GetWindowTextLength(BrowserWindows[i]);
+                        StringBuilder sb = new StringBuilder(length + 1);
+                        GetWindowText(BrowserWindows[i], sb, sb.Capacity);
+                        if (sb.ToString() != "")
+                        {
+                            item.Add(i);
+                            Console.WriteLine("     (" + item.Count + ") " + sb.ToString());
+                        }
+                    }
+                    browser = item.Count;
+                    BrowserWindows = WindowsFinder("MozillaWindowClass", "firefox");
+                    for (var i = 0; i < BrowserWindows.Count; i++)
+                    {
+                        int length = GetWindowTextLength(BrowserWindows[i]);
+                        StringBuilder sb = new StringBuilder(length + 1);
+                        GetWindowText(BrowserWindows[i], sb, sb.Capacity);
+                        if (sb.ToString() != "")
+                        {
+                            item.Add(i);
+                            Console.WriteLine("     (" + item.Count + ") " + sb.ToString());
+                        }
+                    }
+                    Console.Write("\n\nEnter Number: ");
+                    int track = Convert.ToInt32(Console.ReadLine());
+                    if (track > browser)
+                    {
+                        browser = 1;
+                    }
+                    else
+                    {
+                        browser = 0;
+                    }
+                    RunTrack(item[track - 1], browser, true);
+                    break;
+                default:
+                    throw new System.ArgumentException("Index was out of range. Must be non-negative and less than the size of the collection.", "index");
             }
         }
 
         private static void RunTrack(int mode, int browser, bool custom)
         {
             string currentTitle = "";
-            while (true)
+            int update = updateTimer;
+            int timeout = 0;
+            dowork = true;
+
+            var worker = new Thread(() =>
             {
-                StringBuilder sb = null;
-                List<IntPtr> BrowserWindows = null;
-                if (custom)
+                while (dowork)
                 {
-                    if (browser == 0) BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "chrome");
-                    if (browser == 1) BrowserWindows = WindowsFinder("MozillaWindowClass", "firefox");
-                    int length = GetWindowTextLength(BrowserWindows[mode]);
-                    sb = new StringBuilder(length + 1);
-                    GetWindowText(BrowserWindows[mode], sb, sb.Capacity);
-                }
-                else
-                {
-                    string search = "";
-                    if (mode == 1) search = " - YouTube";
-                    if (mode == 2) search = "▶️ ";
-                    BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "chrome");
-                    for (var i = 0; i < BrowserWindows.Count; i++)
+                    if (update < updateTimer - 1)
                     {
-                        int length = GetWindowTextLength(BrowserWindows[i]);
-                        sb = new StringBuilder(length + 1);
-                        GetWindowText(BrowserWindows[i], sb, sb.Capacity);
-                        if (sb.ToString().Contains(search)) break;
-                    }
-                    if (!sb.ToString().Contains(search))
-                    {
-                        BrowserWindows = WindowsFinder("MozillaWindowClass", "firefox");
-                        for (var i = 0; i < BrowserWindows.Count; i++)
-                        {
-                            int length = GetWindowTextLength(BrowserWindows[i]);
-                            sb = new StringBuilder(length + 1);
-                            GetWindowText(BrowserWindows[i], sb, sb.Capacity);
-                            if (sb.ToString().Contains(search)) break;
-                        }
-                    }
-                    if (!sb.ToString().Contains(search))
-                    {
-                        Console.Clear();
-                        RunConsole();
-                    }
-                }
-
-                foreach (string filter in filters)
-                {
-                    sb.Replace(filter, "");
-                }
-
-                if (currentTitle != sb.ToString())
-                {
-                    currentTitle = sb.ToString();
-                    using (StreamWriter writetext = new StreamWriter(saveFile))
-                    {
-                        writetext.WriteLine(currentTitle);
-                    }
-                    Console.Clear();
-                    Console.WriteLine(header);
-                    if (custom)
-                    {
-                        if (browser == 0) Console.Write("\nGoogle Chrome");
-                        if (browser == 1) Console.Write("\nMozilla Firefox");
+                        update++;
                     }
                     else
                     {
-                        if (mode == 1) Console.Write("\nYouTube");
-                        if (mode == 2) Console.Write("\naersia.skie.me (VIP)");
+                        update = 0;
+                        StringBuilder sb = null;
+                        List<IntPtr> BrowserWindows = null;
+                        bool searching = false;
+                        if (custom)
+                        {
+                            if (browser == 0) BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "chrome");
+                            if (browser == 1) BrowserWindows = WindowsFinder("MozillaWindowClass", "firefox");
+                            int length = GetWindowTextLength(BrowserWindows[mode]);
+                            sb = new StringBuilder(length + 1);
+                            GetWindowText(BrowserWindows[mode], sb, sb.Capacity);
+                        }
+                        else
+                        {
+                            string search = "";
+                            if (mode == 1) search = " - YouTube";
+                            if (mode == 2) search = "▶️ ";
+                            BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "chrome");
+                            for (var i = 0; i < BrowserWindows.Count; i++)
+                            {
+                                int length = GetWindowTextLength(BrowserWindows[i]);
+                                sb = new StringBuilder(length + 1);
+                                GetWindowText(BrowserWindows[i], sb, sb.Capacity);
+                                if (sb.ToString().Contains(search)) break;
+                            }
+                            if (!sb.ToString().Contains(search))
+                            {
+                                BrowserWindows = WindowsFinder("MozillaWindowClass", "firefox");
+                                for (var i = 0; i < BrowserWindows.Count; i++)
+                                {
+                                    int length = GetWindowTextLength(BrowserWindows[i]);
+                                    sb = new StringBuilder(length + 1);
+                                    GetWindowText(BrowserWindows[i], sb, sb.Capacity);
+                                    if (sb.ToString().Contains(search)) break;
+                                }
+                            }
+                            if (!sb.ToString().Contains(search))
+                            {
+                                searching = true;
+                                sb.Clear();
+                                sb.Append("Searching...");
+                                timeout += updateTimer;
+                                if (timeout >= timeOut && timeOut != 0)
+                                {
+                                    dowork = false;
+                                    string[] err = { "Unable to find the window title, timed out. (" + timeout + "s)" };
+                                    Main(err);
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                timeout = 0;
+                            }
+                        }
+
+                        foreach (string filter in filters)
+                        {
+                            sb.Replace(filter, "");
+                        }
+
+                        if (currentTitle != sb.ToString())
+                        {
+                            currentTitle = sb.ToString();
+                            if (!searching)
+                            {
+                                using (StreamWriter writetext = new StreamWriter(saveFile))
+                                {
+                                    writetext.WriteLine(currentTitle);
+                                }
+                            }
+                            Console.Clear();
+                            Console.WriteLine(header);
+                            if (custom)
+                            {
+                                if (browser == 0) Console.Write("\nGoogle Chrome");
+                                if (browser == 1) Console.Write("\nMozilla Firefox");
+                            }
+                            else
+                            {
+                                if (mode == 1) Console.Write("\nYouTube");
+                                if (mode == 2) Console.Write("\naersia.skie.me (VIP)");
+                            }
+                            Console.Write(" window title is being tracked! Title saved to: " + saveFile + "\n\n\n");
+                            Console.WriteLine("     " + currentTitle);
+                            Console.WriteLine("\n\nTracking may break if there's more than one window open or if tabs are rapidly accessed/moved/closed.");
+                            Console.WriteLine("\n\nPress ESC to exit the program.\nPress Enter to return to the starting menu.");
+                        }
                     }
-                    Console.Write(" window title is being tracked! Title saved to: " + saveFile + "\n\n\n");
-                    Console.WriteLine("     " + sb.ToString());
-                    Console.WriteLine("\n\nTracking may break if there's more than one window open or if tabs are rapidly accessed/moved/closed.");
+
+                    Thread.Sleep(1000);
                 }
+            });
 
-                Thread.Sleep(updateTimer);
+            worker.Start();
+            while (dowork)
+            {
+                if (Console.KeyAvailable)
+                {
+                    var key = Console.ReadKey(true);
+                    if (key.Key == ConsoleKey.Escape) Environment.Exit(0);
+                    if (key.Key == ConsoleKey.Enter)
+                    {
+                        dowork = false;
+                        string[] err = { "" };
+                        Main(err);
+                        break;
+                    }
+                }
             }
-
-
-
         }
 
         private static List<IntPtr> WindowsFinder(string className, string process)
