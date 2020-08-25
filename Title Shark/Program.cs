@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
 
 namespace Title_Shark
 {
@@ -26,7 +26,7 @@ namespace Title_Shark
         private static string _className;
         private static StringBuilder apiResult = new StringBuilder(256); //256 Is max class name length.
         private delegate bool EnumThreadDelegate(IntPtr hWnd, IntPtr lParam);
-        private static string header = "Title Shark version 1.1 - stoic";
+        private static string header = "Title Shark version 1.2 - stoic";
         private static string saveFile = "Title Shark.txt";
         private static int updateTimer = 5;
         private static int timeOut = 30;
@@ -47,9 +47,9 @@ namespace Title_Shark
                     RunConsole("");
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                string[] err = {e.Message};
+                string[] err = { e.Message };
                 Main(err);
             }
         }
@@ -76,12 +76,12 @@ namespace Title_Shark
                     }
                     if (line.Contains("timeout="))
                     {
-                       timeOut = int.Parse(line.Replace("timeout=", ""));
+                        timeOut = int.Parse(line.Replace("timeout=", ""));
                     }
                 }
                 if (iniread == 2 && !line.Contains("[Filters]"))
                 {
-                    
+
                     filters.Add(line);
                 }
             }
@@ -105,8 +105,7 @@ namespace Title_Shark
                     RunTrack(2, 0, false);
                     break;
                 case 3:
-                    List<int> item = new List<int>();
-                    int browser = 0;
+                    List<BrowserItem> browserItem = new List<BrowserItem>();
                     Console.Clear();
                     Console.WriteLine(header);
                     Console.WriteLine("\nSelect which browser window title to track:\n\n");
@@ -118,11 +117,10 @@ namespace Title_Shark
                         GetWindowText(BrowserWindows[i], sb, sb.Capacity);
                         if (sb.ToString() != "")
                         {
-                            item.Add(i);
-                            Console.WriteLine("     (" + item.Count + ") " + sb.ToString());
+                            browserItem.Add(new BrowserItem(0, i));
+                            Console.WriteLine("     (" + browserItem.Count + ") " + sb.ToString());
                         }
                     }
-                    browser = item.Count;
                     BrowserWindows = WindowsFinder("MozillaWindowClass", "firefox");
                     for (var i = 0; i < BrowserWindows.Count; i++)
                     {
@@ -131,21 +129,37 @@ namespace Title_Shark
                         GetWindowText(BrowserWindows[i], sb, sb.Capacity);
                         if (sb.ToString() != "")
                         {
-                            item.Add(i);
-                            Console.WriteLine("     (" + item.Count + ") " + sb.ToString());
+                            browserItem.Add(new BrowserItem(1, i));
+                            Console.WriteLine("     (" + browserItem.Count + ") " + sb.ToString());
+                        }
+                    }
+                    BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "msedge");
+                    for (var i = 0; i < BrowserWindows.Count; i++)
+                    {
+                        int length = GetWindowTextLength(BrowserWindows[i]);
+                        StringBuilder sb = new StringBuilder(length + 1);
+                        GetWindowText(BrowserWindows[i], sb, sb.Capacity);
+                        if (sb.ToString() != "")
+                        {
+                            browserItem.Add(new BrowserItem(2, i));
+                            Console.WriteLine("     (" + browserItem.Count + ") " + sb.ToString());
+                        }
+                    }
+                    BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "brave");
+                    for (var i = 0; i < BrowserWindows.Count; i++)
+                    {
+                        int length = GetWindowTextLength(BrowserWindows[i]);
+                        StringBuilder sb = new StringBuilder(length + 1);
+                        GetWindowText(BrowserWindows[i], sb, sb.Capacity);
+                        if (sb.ToString() != "")
+                        {
+                            browserItem.Add(new BrowserItem(3, i));
+                            Console.WriteLine("     (" + browserItem.Count + ") " + sb.ToString());
                         }
                     }
                     Console.Write("\n\nEnter Number: ");
                     int track = Convert.ToInt32(Console.ReadLine());
-                    if (track > browser)
-                    {
-                        browser = 1;
-                    }
-                    else
-                    {
-                        browser = 0;
-                    }
-                    RunTrack(item[track - 1], browser, true);
+                    RunTrack(browserItem[track - 1].trackid, browserItem[track - 1].browser, true);
                     break;
                 default:
                     throw new System.ArgumentException("Index was out of range. Must be non-negative and less than the size of the collection.", "index");
@@ -177,7 +191,9 @@ namespace Title_Shark
                         {
                             if (browser == 0) BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "chrome");
                             if (browser == 1) BrowserWindows = WindowsFinder("MozillaWindowClass", "firefox");
-                            int length = GetWindowTextLength(BrowserWindows[mode]);
+                            if (browser == 2) BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "msedge");
+                            if (browser == 3) BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "brave");
+                            var length = GetWindowTextLength(BrowserWindows[mode]);
                             sb = new StringBuilder(length + 1);
                             GetWindowText(BrowserWindows[mode], sb, sb.Capacity);
                         }
@@ -194,7 +210,7 @@ namespace Title_Shark
                                 GetWindowText(BrowserWindows[i], sb, sb.Capacity);
                                 if (sb.ToString().Contains(search)) break;
                             }
-                            if (!sb.ToString().Contains(search))
+                            if (sb == null || !sb.ToString().Contains(search))
                             {
                                 BrowserWindows = WindowsFinder("MozillaWindowClass", "firefox");
                                 for (var i = 0; i < BrowserWindows.Count; i++)
@@ -205,7 +221,29 @@ namespace Title_Shark
                                     if (sb.ToString().Contains(search)) break;
                                 }
                             }
-                            if (!sb.ToString().Contains(search))
+                            if (sb == null || !sb.ToString().Contains(search))
+                            {
+                                BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "msedge");
+                                for (var i = 0; i < BrowserWindows.Count; i++)
+                                {
+                                    int length = GetWindowTextLength(BrowserWindows[i]);
+                                    sb = new StringBuilder(length + 1);
+                                    GetWindowText(BrowserWindows[i], sb, sb.Capacity);
+                                    if (sb.ToString().Contains(search)) break;
+                                }
+                            }
+                            if (sb == null || !sb.ToString().Contains(search))
+                            {
+                                BrowserWindows = WindowsFinder("Chrome_WidgetWin_1", "brave");
+                                for (var i = 0; i < BrowserWindows.Count; i++)
+                                {
+                                    int length = GetWindowTextLength(BrowserWindows[i]);
+                                    sb = new StringBuilder(length + 1);
+                                    GetWindowText(BrowserWindows[i], sb, sb.Capacity);
+                                    if (sb.ToString().Contains(search)) break;
+                                }
+                            }
+                            if (sb == null || !sb.ToString().Contains(search))
                             {
                                 searching = true;
                                 sb.Clear();
@@ -246,6 +284,8 @@ namespace Title_Shark
                             {
                                 if (browser == 0) Console.Write("\nGoogle Chrome");
                                 if (browser == 1) Console.Write("\nMozilla Firefox");
+                                if (browser == 2) Console.Write("\nMicrosoft Edge");
+                                if (browser == 3) Console.Write("\nBrave");
                             }
                             else
                             {
@@ -284,17 +324,17 @@ namespace Title_Shark
         private static List<IntPtr> WindowsFinder(string className, string process)
         {
             _className = className;
-            windowList = new List<IntPtr>();
+            Program.windowList = new List<IntPtr>();
 
-            Process[] chromeList = Process.GetProcessesByName(process);
+            Process[] windowList = Process.GetProcessesByName(process);
 
-            if (chromeList.Length > 0)
+            if (windowList.Length > 0)
             {
-                foreach (Process chrome in chromeList)
+                foreach (Process window in windowList)
                 {
-                    if (chrome.MainWindowHandle != IntPtr.Zero)
+                    if (window.MainWindowHandle != IntPtr.Zero)
                     {
-                        foreach (ProcessThread thread in chrome.Threads)
+                        foreach (ProcessThread thread in window.Threads)
                         {
                             EnumThreadWindows((uint)thread.Id, new EnumThreadDelegate(EnumThreadCallback), IntPtr.Zero);
                         }
@@ -302,7 +342,7 @@ namespace Title_Shark
                 }
             }
 
-            return windowList;
+            return Program.windowList;
         }
 
         static bool EnumThreadCallback(IntPtr hWnd, IntPtr lParam)
@@ -317,4 +357,15 @@ namespace Title_Shark
             return true;
         }
     }
+
+    public class BrowserItem
+    {
+        public BrowserItem(int b, int t)
+        {
+            this.browser = b;
+            this.trackid = t;
+        }
+        public int browser { get; set; }
+        public int trackid { get; set; }
+    } 
 }
