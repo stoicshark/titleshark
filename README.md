@@ -1,7 +1,7 @@
 ## Title Shark
 ![Screenshot](https://i.imgur.com/J7z6GLB.png)
 
-Reads browser window titles and saves them into a text file for use with OBS. Works with Google Chrome. Mozilla Firefox, Microsoft Edge, and Brave. Make sure the window/tab you want tracked is in it's own seperate main window (Minimizing shouldn't affect tracking). Has very basic detection functionality to automatically track browser titles for YouTube and aersia.skie.me (VIP). It can also be manually set to track other windows for title changes.
+Reads browser window titles and saves them into a text file for use with OBS. Works with Google Chrome, Mozilla Firefox, Microsoft Edge, and Brave. Make sure the window/tab you want tracked is in it's own seperate main window (Minimizing shouldn't affect tracking). Has very basic detection functionality to automatically track browser titles for YouTube and aersia.skie.me (VIP). It can also be manually set to track other windows for title changes.
 
 Releases/Downloads: https://github.com/stoicshark/titleshark/releases
 
